@@ -14,6 +14,7 @@ Load image with:
 ```
 
 data-type could be:
+
 0. auto (default, todo)
     load with canvas on default, change to img tag on mobile devices
 1. img
