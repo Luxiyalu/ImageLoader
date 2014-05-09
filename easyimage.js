@@ -131,38 +131,37 @@
 
   extend(Emg, Evented.prototype);
 
-  Emg.init = function() {
+  Emg.init = function(options) {
+    var obj;
     Emg.arr = [];
     Emg.currentNum = 0;
     Emg.targetNum = 0;
     Emg.elems = $('.emg');
+    Emg.mediaElems = [];
     Emg.length = Emg.elems.length;
-    Emg.elems.each((function(_this) {
-      return function(i, e) {
-        var $e, alt, src, type;
-        $e = $(e);
-        alt = $e.data('alt');
-        src = $e.data('src');
-        type = $e.data('type');
-        return Emg.load($e, type, src, alt);
-      };
-    })(this));
-    return Emg.startProcess();
+    for (obj in options) {
+      Emg[obj] = options[obj];
+    }
+    if (Emg.divide && Emg.naming) {
+      return Emg.bindWindowResize();
+    }
   };
 
-  Emg.startProcess = function() {
-    console.log('startProcess');
+  Emg.start = function() {
+    Emg.trigger('start');
+    Emg.elems.each((function(_this) {
+      return function(i, e) {
+        return Emg.load($(e));
+      };
+    })(this));
     Emg.processing = true;
     Emg.processTimer = Date.now();
     return Emg.update();
   };
 
-  Emg.endProcess = function() {
+  Emg.end = function() {
     Emg.trigger('complete');
-    Emg.processing = false;
-    return clearTimeout(function() {
-      return Emg.displayTimeout();
-    });
+    return Emg.processing = false;
   };
 
   Emg.update = function() {
@@ -187,12 +186,11 @@
       });
       Emg.targetNum = 0 + filtered.length / Emg.length * 100;
     }
-    console.log(Emg.currentNum, Emg.targetNum);
     if (Emg.currentNum >= 100) {
-      Emg.endProcess();
+      Emg.end();
       return;
     }
-    delta = (Emg.targetNum - Emg.currentNum) / 20;
+    delta = (Emg.targetNum - Emg.currentNum) / 2;
     absDelta = Math.abs(delta);
     if (absDelta < 0.01) {
       return Emg.currentNum = Emg.targetNum;
@@ -201,38 +199,97 @@
     }
   };
 
-  Emg.load = function($e, type, src, alt) {
-    var d;
-    if (type === 'cvs') {
-      console.log('load with canvas');
+  Emg.mediaP = function(src) {
+    return src.match(/{media}/);
+  };
+
+  Emg.getSrc = function(src) {
+    Emg.media = Emg.media || Emg.getMedia();
+    return src.replace(/{media}/, Emg.media);
+  };
+
+  Emg.load = function($e) {
+    var alt, d, src, type;
+    alt = $e.data('alt');
+    src = $e.data('src');
+    type = $e.data('type');
+    if (Emg.mediaP(src)) {
+      Emg.mediaElems.push($e);
+      src = Emg.getSrc(src);
     }
-    if (type === 'bg') {
-      return console.log('load with background');
-    } else {
-      console.log('load with img');
-      d = $.Deferred(function() {
-        var $img;
-        $img = $('<img src="' + src + '" alt="' + alt + '">');
-        $img.on('load', (function(_this) {
-          return function(event) {
-            return _this.resolve();
-          };
-        })(this));
-        $img.on('error', (function(_this) {
-          return function(event) {
-            console.log("image doesn't exist");
-            return _this.resolve();
-          };
-        })(this));
-        return $e.append($img);
+    d = $.Deferred(function() {
+      var $img;
+      $img = $('<img>').attr({
+        src: src,
+        alt: alt
       });
-      return Emg.add(d);
+      $img.on('load', (function(_this) {
+        return function(event) {
+          return _this.resolve();
+        };
+      })(this));
+      $img.on('error', (function(_this) {
+        return function(event) {
+          console.log("image doesn't exist");
+          return _this.resolve();
+        };
+      })(this));
+      if (type === 'cvs') {
+        console.log('load with canvas');
+      }
+      if (type === 'bg') {
+        return $e.css('backgroundImage', 'url(' + src + ')');
+      } else {
+        return $e.append($img);
+      }
+    });
+    return Emg.add(d);
+  };
+
+  Emg.bindWindowResize = function() {
+    return $(window).on('resize', function() {
+      var t;
+      t = Date.now();
+      return setTimeout(function() {
+        var $e, media, _i, _len, _ref;
+        if (t - Emg.resizeTimer < 100) {
+          return;
+        }
+        media = Emg.getMedia();
+        if (Emg.media === media) {
+          return;
+        }
+        Emg.media = media;
+        _ref = Emg.mediaElems;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          $e = _ref[_i];
+          Emg.load($e);
+        }
+        return Emg.resizeTimer = t;
+      }, 200);
+    });
+  };
+
+  Emg.getMedia = function() {
+    var i, num, _i, _ref;
+    if (Emg.divide && Emg.naming) {
+      i = 0;
+      for (num = _i = 0, _ref = Emg.divide.length; 0 <= _ref ? _i < _ref : _i > _ref; num = 0 <= _ref ? ++_i : --_i) {
+        if ($(window).width() > Emg.divide[num]) {
+          i++;
+        }
+      }
+      return Emg.naming[i];
+    } else {
+      return console.log('Please provide options "divide" and "naming" for mediaquery to work');
     }
   };
 
   Emg.add = function(def) {
     return Emg.arr.push(def);
   };
+
+  Emg.init();
 
   if (typeof define === 'function' && define.amd) {
     define(function() {
@@ -241,7 +298,7 @@
   } else if (typeof exports === 'object') {
     module.exports = Emg;
   } else {
-    Emg.init();
+    Emg.start();
   }
 
 }).call(this);
