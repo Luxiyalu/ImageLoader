@@ -62,79 +62,81 @@ class Evented
         else
           i++
   
-window.Emg ?= {}
-extend Emg, Evented::
+window.ImageLoader ?= {}
+extend ImageLoader, Evented::
   
-Emg.init = (options) ->
+ImageLoader.init = (options) ->
   # console.log 'init'
-  Emg.arr = []
-  Emg.currentNum = 0
-  Emg.targetNum = 0
-  Emg.elems = $('.emg')
-  Emg.mediaElems = []
-  Emg.length = Emg.elems.length
+  ImageLoader.arr = []
+  ImageLoader.currentNum = 0
+  ImageLoader.targetNum = 0
+  ImageLoader.elems = $('.emg')
+  ImageLoader.mediaElems = []
+  ImageLoader.length = ImageLoader.elems.length
   
   for obj of options
-    Emg[obj] = options[obj]
+    ImageLoader[obj] = options[obj]
     
-  if Emg.divide && Emg.naming
-    Emg.bindWindowResize()
+  if ImageLoader.divide && ImageLoader.naming
+    ImageLoader.bindWindowResize()
     
-Emg.start = () ->
-  Emg.trigger('start')
-  Emg.elems.each (i, e) =>
-    Emg.load($(e))
-  Emg.processing = true
-  Emg.processTimer = Date.now()
-  Emg.update()
+  ImageLoader.start()
+    
+ImageLoader.start = () ->
+  ImageLoader.trigger('start')
+  ImageLoader.elems.each (i, e) =>
+    ImageLoader.load($(e))
+  ImageLoader.processing = true
+  ImageLoader.processTimer = Date.now()
+  ImageLoader.update()
   
-Emg.end = () ->
-  Emg.trigger('complete')
-  Emg.processing = false
+ImageLoader.end = () ->
+  ImageLoader.trigger('complete')
+  ImageLoader.processing = false
    
-Emg.update = ->
-  if Emg.processing
-    do Emg.processHandler
+ImageLoader.update = ->
+  if ImageLoader.processing
+    do ImageLoader.processHandler
     requestAnimationFrame =>
-      Emg.trigger('update')
-      Emg.update()
+      ImageLoader.trigger('update')
+      ImageLoader.update()
       
-Emg.processHandler = ->
+ImageLoader.processHandler = ->
   t = Date.now()
-  if (t - Emg.processTimer >= 100)
-    Emg.processTimer = t
-    filtered = Emg.arr.filter (e) ->
+  if (t - ImageLoader.processTimer >= 100)
+    ImageLoader.processTimer = t
+    filtered = ImageLoader.arr.filter (e) ->
       e.state() == 'resolved'
-    Emg.targetNum = 0 + filtered.length / Emg.length * 100
+    ImageLoader.targetNum = 0 + filtered.length / ImageLoader.length * 100
     
-  if Emg.currentNum >= 100
-    Emg.end()
+  if ImageLoader.currentNum >= 100
+    ImageLoader.end()
     return
   
-  delta = (Emg.targetNum - Emg.currentNum) / 2
+  delta = (ImageLoader.targetNum - ImageLoader.currentNum) / 2
   absDelta = Math.abs(delta)
   
   if absDelta < 0.01
-    Emg.currentNum = Emg.targetNum
+    ImageLoader.currentNum = ImageLoader.targetNum
   else
-    Emg.currentNum += delta
+    ImageLoader.currentNum += delta
       
-Emg.mediaP = (src) ->
+ImageLoader.mediaP = (src) ->
   # if the src include a {media}
   src.match(/{media}/)
   
-Emg.getSrc = (src) ->
-  Emg.media = Emg.media || Emg.getMedia() # if first time, get Media
-  src.replace(/{media}/, Emg.media)
+ImageLoader.getSrc = (src) ->
+  ImageLoader.media = ImageLoader.media || ImageLoader.getMedia() # if first time, get Media
+  src.replace(/{media}/, ImageLoader.media)
   
-Emg.load = ($e) ->
+ImageLoader.load = ($e) ->
   alt = $e.data('alt')
   src = $e.data('src')
   type = $e.data('type')
   
-  if Emg.mediaP(src)
-    Emg.mediaElems.push($e)
-    src = Emg.getSrc(src)
+  if ImageLoader.mediaP(src)
+    ImageLoader.mediaElems.push($e)
+    src = ImageLoader.getSrc(src)
     
   d = $.Deferred ->
     $img = $('<img>').attr
@@ -159,47 +161,47 @@ Emg.load = ($e) ->
     else
       $e.append($img)
       
-  Emg.add(d)
+  ImageLoader.add(d)
 
-Emg.bindWindowResize = ->
+ImageLoader.bindWindowResize = ->
   $(window).on 'resize', ->
     t = Date.now()
     setTimeout ->
-        return if t - Emg.resizeTimer < 100 # interval of getMedia()
+        return if t - ImageLoader.resizeTimer < 100 # interval of getMedia()
         
-        media = Emg.getMedia()
-        return if Emg.media is media
+        media = ImageLoader.getMedia()
+        return if ImageLoader.media is media
         
         # console.log 'change to', media
-        Emg.media = media
-        for $e in Emg.mediaElems
-          Emg.load($e)
+        ImageLoader.media = media
+        for $e in ImageLoader.mediaElems
+          ImageLoader.load($e)
             
-        Emg.resizeTimer = t
+        ImageLoader.resizeTimer = t
       , 200 # delay from stop resizing to change src
       # must be larger than the first interval, or it wouldn't make sense to exist
       
-Emg.getMedia = ->
-  if Emg.divide && Emg.naming
+ImageLoader.getMedia = ->
+  if ImageLoader.divide && ImageLoader.naming
     i = 0
-    for num in [0...Emg.divide.length]
-      i++ if $(window).width() > Emg.divide[num]
-    Emg.naming[i]
+    for num in [0...ImageLoader.divide.length]
+      i++ if $(window).width() > ImageLoader.divide[num]
+    ImageLoader.naming[i]
   else
     console.log 'Please provide options "divide" and "naming" for mediaquery to work'
     
-Emg.add = (def) ->
-  Emg.arr.push(def)
+ImageLoader.add = (def) ->
+  ImageLoader.arr.push(def)
     
 # initiate
-Emg.init()
+ImageLoader.init()
 
 if typeof define is 'function' and define.amd
   # AMD
-  define -> Emg
+  define -> ImageLoader
 else if typeof exports is 'object'
   # CommonJS
-  module.exports = Emg
+  module.exports = ImageLoader
 else
   # Global
-  Emg.start()
+  ImageLoader.start()

@@ -125,97 +125,98 @@
 
   })();
 
-  if (window.Emg == null) {
-    window.Emg = {};
+  if (window.ImageLoader == null) {
+    window.ImageLoader = {};
   }
 
-  extend(Emg, Evented.prototype);
+  extend(ImageLoader, Evented.prototype);
 
-  Emg.init = function(options) {
+  ImageLoader.init = function(options) {
     var obj;
-    Emg.arr = [];
-    Emg.currentNum = 0;
-    Emg.targetNum = 0;
-    Emg.elems = $('.emg');
-    Emg.mediaElems = [];
-    Emg.length = Emg.elems.length;
+    ImageLoader.arr = [];
+    ImageLoader.currentNum = 0;
+    ImageLoader.targetNum = 0;
+    ImageLoader.elems = $('.emg');
+    ImageLoader.mediaElems = [];
+    ImageLoader.length = ImageLoader.elems.length;
     for (obj in options) {
-      Emg[obj] = options[obj];
+      ImageLoader[obj] = options[obj];
     }
-    if (Emg.divide && Emg.naming) {
-      return Emg.bindWindowResize();
+    if (ImageLoader.divide && ImageLoader.naming) {
+      ImageLoader.bindWindowResize();
     }
+    return ImageLoader.start();
   };
 
-  Emg.start = function() {
-    Emg.trigger('start');
-    Emg.elems.each((function(_this) {
+  ImageLoader.start = function() {
+    ImageLoader.trigger('start');
+    ImageLoader.elems.each((function(_this) {
       return function(i, e) {
-        return Emg.load($(e));
+        return ImageLoader.load($(e));
       };
     })(this));
-    Emg.processing = true;
-    Emg.processTimer = Date.now();
-    return Emg.update();
+    ImageLoader.processing = true;
+    ImageLoader.processTimer = Date.now();
+    return ImageLoader.update();
   };
 
-  Emg.end = function() {
-    Emg.trigger('complete');
-    return Emg.processing = false;
+  ImageLoader.end = function() {
+    ImageLoader.trigger('complete');
+    return ImageLoader.processing = false;
   };
 
-  Emg.update = function() {
-    if (Emg.processing) {
-      Emg.processHandler();
+  ImageLoader.update = function() {
+    if (ImageLoader.processing) {
+      ImageLoader.processHandler();
       return requestAnimationFrame((function(_this) {
         return function() {
-          Emg.trigger('update');
-          return Emg.update();
+          ImageLoader.trigger('update');
+          return ImageLoader.update();
         };
       })(this));
     }
   };
 
-  Emg.processHandler = function() {
+  ImageLoader.processHandler = function() {
     var absDelta, delta, filtered, t;
     t = Date.now();
-    if (t - Emg.processTimer >= 100) {
-      Emg.processTimer = t;
-      filtered = Emg.arr.filter(function(e) {
+    if (t - ImageLoader.processTimer >= 100) {
+      ImageLoader.processTimer = t;
+      filtered = ImageLoader.arr.filter(function(e) {
         return e.state() === 'resolved';
       });
-      Emg.targetNum = 0 + filtered.length / Emg.length * 100;
+      ImageLoader.targetNum = 0 + filtered.length / ImageLoader.length * 100;
     }
-    if (Emg.currentNum >= 100) {
-      Emg.end();
+    if (ImageLoader.currentNum >= 100) {
+      ImageLoader.end();
       return;
     }
-    delta = (Emg.targetNum - Emg.currentNum) / 2;
+    delta = (ImageLoader.targetNum - ImageLoader.currentNum) / 2;
     absDelta = Math.abs(delta);
     if (absDelta < 0.01) {
-      return Emg.currentNum = Emg.targetNum;
+      return ImageLoader.currentNum = ImageLoader.targetNum;
     } else {
-      return Emg.currentNum += delta;
+      return ImageLoader.currentNum += delta;
     }
   };
 
-  Emg.mediaP = function(src) {
+  ImageLoader.mediaP = function(src) {
     return src.match(/{media}/);
   };
 
-  Emg.getSrc = function(src) {
-    Emg.media = Emg.media || Emg.getMedia();
-    return src.replace(/{media}/, Emg.media);
+  ImageLoader.getSrc = function(src) {
+    ImageLoader.media = ImageLoader.media || ImageLoader.getMedia();
+    return src.replace(/{media}/, ImageLoader.media);
   };
 
-  Emg.load = function($e) {
+  ImageLoader.load = function($e) {
     var alt, d, src, type;
     alt = $e.data('alt');
     src = $e.data('src');
     type = $e.data('type');
-    if (Emg.mediaP(src)) {
-      Emg.mediaElems.push($e);
-      src = Emg.getSrc(src);
+    if (ImageLoader.mediaP(src)) {
+      ImageLoader.mediaElems.push($e);
+      src = ImageLoader.getSrc(src);
     }
     d = $.Deferred(function() {
       var $img;
@@ -243,64 +244,64 @@
         return $e.append($img);
       }
     });
-    return Emg.add(d);
+    return ImageLoader.add(d);
   };
 
-  Emg.bindWindowResize = function() {
+  ImageLoader.bindWindowResize = function() {
     return $(window).on('resize', function() {
       var t;
       t = Date.now();
       return setTimeout(function() {
         var $e, media, _i, _len, _ref;
-        if (t - Emg.resizeTimer < 100) {
+        if (t - ImageLoader.resizeTimer < 100) {
           return;
         }
-        media = Emg.getMedia();
-        if (Emg.media === media) {
+        media = ImageLoader.getMedia();
+        if (ImageLoader.media === media) {
           return;
         }
-        Emg.media = media;
-        _ref = Emg.mediaElems;
+        ImageLoader.media = media;
+        _ref = ImageLoader.mediaElems;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           $e = _ref[_i];
-          Emg.load($e);
+          ImageLoader.load($e);
         }
-        return Emg.resizeTimer = t;
+        return ImageLoader.resizeTimer = t;
       }, 200);
     });
   };
 
-  Emg.getMedia = function() {
+  ImageLoader.getMedia = function() {
     var i, num, _i, _ref;
-    if (Emg.divide && Emg.naming) {
+    if (ImageLoader.divide && ImageLoader.naming) {
       i = 0;
-      for (num = _i = 0, _ref = Emg.divide.length; 0 <= _ref ? _i < _ref : _i > _ref; num = 0 <= _ref ? ++_i : --_i) {
-        if ($(window).width() > Emg.divide[num]) {
+      for (num = _i = 0, _ref = ImageLoader.divide.length; 0 <= _ref ? _i < _ref : _i > _ref; num = 0 <= _ref ? ++_i : --_i) {
+        if ($(window).width() > ImageLoader.divide[num]) {
           i++;
         }
       }
-      return Emg.naming[i];
+      return ImageLoader.naming[i];
     } else {
       return console.log('Please provide options "divide" and "naming" for mediaquery to work');
     }
   };
 
-  Emg.add = function(def) {
-    return Emg.arr.push(def);
+  ImageLoader.add = function(def) {
+    return ImageLoader.arr.push(def);
   };
 
-  Emg.init();
+  ImageLoader.init();
 
   if (typeof define === 'function' && define.amd) {
     define(function() {
-      return Emg;
+      return ImageLoader;
     });
   } else if (typeof exports === 'object') {
-    module.exports = Emg;
+    module.exports = ImageLoader;
   } else {
-    Emg.start();
+    ImageLoader.start();
   }
 
 }).call(this);
 
-//# sourceMappingURL=easyimage.map
+//# sourceMappingURL=ImageLoader.map
