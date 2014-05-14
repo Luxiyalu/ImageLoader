@@ -8,5 +8,5 @@
     "jquery", "~1.10.2"
   },
   "description": "An image loader",
-  "main": "ImageLoader.js",
+  "main": "ImageLoader.js"
 }
