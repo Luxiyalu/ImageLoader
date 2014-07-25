@@ -53,7 +53,7 @@ Will provide a div that changes its background image url to "arrow-small.png" wi
 The default image load type, could be: <code>img</code>, <code>bg</code>, <code>cvs</code>.
 
 ```javascript
-Emg.init({defaultType: "cvs"});
+ImageLoader.init({defaultType: "cvs"});
 ```
 Load images by canvas if attribute <code>data-type</code> is not specified.
 
